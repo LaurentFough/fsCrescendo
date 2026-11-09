@@ -76,7 +76,7 @@ jobs:
           (cd dist && shasum -a 256 * > SHA256SUMS)
           cat dist/SHA256SUMS
       - name: Provenance attestation
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*
       - uses: actions/upload-artifact@v4
