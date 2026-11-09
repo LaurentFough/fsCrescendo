@@ -79,8 +79,8 @@ struct FilterRule: Codable, Equatable {
             }
             let h = hay.lowercased(), n = needle.lowercased()
             switch op {
-            case .contains: return h.contains(n)
-            case .notContains: return !h.contains(n)
+            case .contains: return h.range(of: n, options: .literal) != nil     //= both sides are already lower-case: no folding needed
+            case .notContains: return h.range(of: n, options: .literal) == nil
             case .isEqual: return h == n
             case .notEqual: return h != n
             case .beginsWith: return h.hasPrefix(n)
@@ -112,9 +112,16 @@ struct FilterRule: Codable, Equatable {
 
 struct FileFilter {
     var matchAll = true
-    var rules = [FilterRule]()
+    //= the rules that have a value are computed once when the rules change, not for every row that is tested
+    var rules = [FilterRule]() { didSet { active = rules.filter { $0.isActive } } }
+    private(set) var active = [FilterRule]()
 
-    var active: [FilterRule] { rules.filter { $0.isActive } }
+    //= (property observers do not run inside an initialiser, so the cache is filled here)
+    init(matchAll: Bool = true, rules: [FilterRule] = []) {
+        self.matchAll = matchAll
+        self.rules = rules
+        self.active = rules.filter { $0.isActive }
+    }
     var isActive: Bool { !active.isEmpty }
 
     func matches(_ row: FileRow) -> Bool {
