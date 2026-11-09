@@ -98,7 +98,7 @@ def icon(kind: str, size: int = 16) -> str:
               "log": "#aeb4bd", "json": "#f0a030", "pkg": "#c9a14a", "md": "#aeb4bd", "xlsx": "#46b06a", "tmp": "#c3c3c8", "partial": "#c3c3c8"}
     c = colors.get(kind, "#aeb4bd")
     return (f'<svg width="{s}" height="{s}" viewBox="0 0 16 16"><path d="M3 1.5h6.2L13 5.3v8.4c0 .5-.4.8-.8.8H3.8c-.4 0-.8-.3-.8-.8V2.3c0-.4.4-.8 0-.8z" fill="#fff" stroke="#b9b9c0" stroke-width=".8"/>'
-            f'<path d="M9.2 1.5v3.1c0 .4.3.7.7.7H13" fill="#e6e6ea" stroke="#b9b9c0" stroke-width=".8"/><rect x="4.5" y="8.4" width="7" height="3.6" rx=".8" fill="{c}"/></svg>')
+            f'<path d="M9.2 1.5v3.1c0 0.4 0.3 0.7 0.7 0.7H13" fill="#e6e6ea" stroke="#b9b9c0" stroke-width=".8"/><rect x="4.5" y="8.4" width="7" height="3.6" rx=".8" fill="{c}"/></svg>')
 
 
 KIND = {"created": ("#2fb344", "+"), "deleted": ("#e5382f", "✕"), "modified": ("#f5a000", "✎"), "attributes": ("#8e8e93", "⚙"),
