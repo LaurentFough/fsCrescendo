@@ -11,6 +11,8 @@ workbench for `sandbox-exec` profiles: run a suspicious program in a sandbox, se
   <img alt="File activity in the main window" src="docs/screenshots/hero-light.png">
 </picture>
 
+<sub>Pictures in this documentation are illustrations drawn from HTML mockups with made-up data, not screenshots (see [docs/screenshots](docs/screenshots/README.md)).</sub>
+
 - **No Apple entitlement and no SIP changes.** Events come from Apple's own `eslogger` tool through a small helper daemon you
   install once with an administrator password. (The original Endpoint Security app needs an Apple-approved entitlement or a VM with SIP off.)
 - **Everything stays on your Mac.** No network access, no telemetry. See [Privacy and permissions](#privacy-and-permissions).
