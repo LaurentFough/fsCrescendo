@@ -1,5 +1,5 @@
 #= ---------------------------------------------------------------------------
-#= Makefile  -- version 1.12.0  (2026-11-09)
+#= Makefile  -- version 1.13.0  (2026-11-09)
 #= Build / lint / test / debug / clean helpers for fsCrescendo.
 #= Usage  : make help
 #= Needs  : macOS 13+. `make build` uses full Xcode if usable, else the Command Line Tools
@@ -11,7 +11,7 @@
 #=          load unless you use `make build-signed TEAM=<id>`.
 #= ---------------------------------------------------------------------------
 
-MAKEFILE_VERSION := 1.12.0
+MAKEFILE_VERSION := 1.13.0
 SHELL            := /bin/bash
 .DEFAULT_GOAL    := help
 
@@ -54,7 +54,9 @@ export NAMES LAST ES_EVENTS TEAM BUILD_MODE SIGN FORCE CONFIRM
 BUILD_NUMBER := $(shell git rev-list --count HEAD 2>/dev/null || echo 0)
 BUILD_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo none)$(shell git diff --quiet HEAD 2>/dev/null || echo -dirty)
 BUILD_DATE   := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-#= APP_VERSION=1.2.3 also sets the marketing version (the release workflow does this from the tag)
+#= The app version is MAJOR.MINOR from the VERSION file plus the build number (commit count): 0.1 -> 0.1.57. CI uses the same rule
+#= for its release tags. APP_VERSION=1.2.3 overrides it.
+APP_VERSION ?= $(if $(wildcard VERSION),$(shell tr -d ' \r\n' < VERSION).$(BUILD_NUMBER))
 VERSION_FLAGS := CURRENT_PROJECT_VERSION=$(BUILD_NUMBER) CRESCENDO_BUILD_COMMIT=$(BUILD_COMMIT) CRESCENDO_BUILD_DATE=$(BUILD_DATE) $(if $(APP_VERSION),MARKETING_VERSION=$(APP_VERSION))
 
 SYMROOT  := $(CURDIR)/$(BUILD_DIR)/products
@@ -129,7 +131,7 @@ help: #= Show this help
 
 version: #= Print Makefile, git and app build identity
 	@echo "Makefile $(MAKEFILE_VERSION)"
-	@echo "app build: number $(BUILD_NUMBER), commit $(BUILD_COMMIT), time $(BUILD_DATE)"
+	@echo "app build: version $(APP_VERSION), number $(BUILD_NUMBER), commit $(BUILD_COMMIT), time $(BUILD_DATE)"
 	@git describe --always --dirty --tags 2>/dev/null || echo "git: not a repository"
 
 doctor: #= Environment report: OS, Xcode, tools, SIP/AMFI, repo state

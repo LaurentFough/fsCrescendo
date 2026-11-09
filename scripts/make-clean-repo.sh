@@ -81,6 +81,6 @@ Next (nothing has been pushed):
   2. cd "$OUT"
      git remote add origin <URL of the new repository>
      git push -u origin $BRANCH
-  3. In the new repository: Settings > Code security > enable "Private vulnerability reporting"; Settings > Actions > General > allow actions;
-     then push a tag to try the release workflow:  git tag v0.1.0 && git push origin v0.1.0
+  3. In the new repository: Settings > Code security > enable "Private vulnerability reporting"; Settings > Actions > General > allow actions.
+     Every push to main then builds and publishes a pre-release automatically (see docs/development.md).
 NEXT

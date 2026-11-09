@@ -5,3 +5,6 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      artifact-actions:        # upload- and download-artifact must be on compatible versions
+        patterns: ["actions/upload-artifact", "actions/download-artifact"]
