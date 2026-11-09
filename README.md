@@ -1,6 +1,6 @@
 ![Cover](assets/cover.png)
 
-# Crescendo (fsCrescendo fork)
+# fsCrescendo (Crescendo fork)
 
 **See what programs do to your files, in real time, on a normal Mac, then confine them.**
 A local inspector for file activity (created, deleted, modified, renamed, attribute changes, with the process responsible) and a
