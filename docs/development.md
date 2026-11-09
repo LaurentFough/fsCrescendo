@@ -62,10 +62,13 @@ The repository only uses **"Sign to Run Locally"** (ad-hoc). No team id, certifi
 ## Continuous integration and releases
 
 - `ci.yml`: engine tests, hygiene (signing, personal data, shell syntax, docs), and a macOS build of the lite app (artifact kept 7 days).
-- `release.yml`: push a tag `vX.Y.Z` (or run it by hand with an existing tag). It runs the tests, builds on macOS with
-  `make build-lite APP_VERSION=X.Y.Z`, packages `Crescendo-lite-*.zip`, `crescendo-esd-*`, `cresc-engine-*.tar.gz` and `SHA256SUMS`, adds a
-  build-provenance attestation, and creates the GitHub release. No secrets are used; artifacts are ad-hoc signed and not notarized.
-- Build identity: build number = commit count, plus commit and UTC time, stamped into Info.plist (`make version`).
+- `release.yml` is **automatic**: every push to `main` (except documentation-only pushes, or a commit message containing `[skip release]`) runs the tests,
+  builds on macOS, and publishes a **pre-release** tagged `v<MAJOR.MINOR>.<build>`. MAJOR.MINOR comes from the `VERSION` file (change it by hand for a new
+  minor or major version); build = number of commits, so `0.1` becomes `v0.1.57`. Nothing is tagged by hand. The newest 10 pre-releases are kept.
+  To publish a normal release, run the Release workflow by hand (Actions > Release > Run workflow) with **official** ticked: that marks the current `main` as the latest release.
+  Assets: `Crescendo-lite-<tag>.zip`, `crescendo-esd-<tag>-<arch>`, `cresc-engine-<tag>.tar.gz`, `SHA256SUMS`, plus a build-provenance attestation.
+  No secrets are used; artifacts are ad-hoc signed and not notarized.
+- Build identity: version = `VERSION` + build number (commit count), plus the commit and UTC time, stamped into Info.plist (`make version`); local builds use the same rule.
 - `dependabot.yml` keeps the actions up to date. For stricter supply-chain hygiene pin the actions to commit SHAs.
 
 ## Conventions

@@ -1,61 +1,84 @@
-# = Release: builds the lite app and its helpers on a macOS runner and publishes them as a GitHub release.
-# = Trigger: push a tag like v1.2.3 (or run the workflow by hand with an existing tag).
-# = What is published: the app (zip), the event daemon binary, the cresc engine (tar.gz), SHA256SUMS, and a build provenance attestation.
-# = Signing: ad-hoc ("Sign to Run Locally") only. There is NO Apple team id, certificate or secret anywhere in this workflow, so the
-# = artifacts are not notarized; the release notes tell users how to open them. The daemon binary is ad-hoc signed too.
+# = Release, fully automatic.
+# =   Every push to main builds the lite app and publishes a PRE-RELEASE tagged  v<MAJOR.MINOR>.<build>
+# =   (MAJOR.MINOR from the VERSION file, build = number of commits, so 0.1 -> v0.1.57). Nothing to tag by hand.
+# =   Run this workflow by hand with "official" ticked to publish the current main as a normal release (marked latest).
+# =   Only the newest 10 pre-releases (and their tags) are kept.
+# = Skip a build by putting [skip release] in the commit message; documentation-only pushes are skipped automatically.
+# = Signing: ad-hoc only. No Apple team id, certificate or secret is used anywhere, so artifacts are not notarized.
 name: Release
 
 on:
   push:
-    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**", "LICENSE", ".github/dependabot.yml"]
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Existing tag to build and publish (for example v1.2.3)"
-        required: true
+      official:
+        description: "Publish as an official release (not a pre-release) and mark it latest"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  tests:
-    name: engine tests before release
+  version:
+    name: work out the version and tag
     runs-on: ubuntu-latest
-    env:
-      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip release]')
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+      build: ${{ steps.v.outputs.build }}
     steps:
-      - name: Check the tag name
-        run: |
-          case "$TAG" in v[0-9]*.[0-9]*.[0-9]*) ;; *) echo "bad tag: $TAG" >&2; exit 1 ;; esac
-          printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+([-.][A-Za-z0-9.]+)?$' || { echo "bad tag: $TAG" >&2; exit 1; }
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref_name }}
+          fetch-depth: 0 # the build number is the commit count
+      - id: v
+        run: |
+          BASE=$(tr -d ' \r\n' < VERSION)
+          printf '%s' "$BASE" | grep -Eq '^[0-9]+\.[0-9]+$' || { echo "VERSION must look like 1.2 (it is: $BASE)" >&2; exit 1; }
+          BUILD=$(git rev-list --count HEAD)
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "version=$BASE.$BUILD" >> "$GITHUB_OUTPUT"
+          echo "tag=v$BASE.$BUILD" >> "$GITHUB_OUTPUT"
+          echo "This build: v$BASE.$BUILD"
+
+  tests:
+    name: engine tests and checks
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
       - name: Engine tests
         working-directory: tools/cresc
         run: python -m unittest discover -s tests -t .
-      - name: Personal data and signing checks
+      - name: Signing and personal-data checks
         run: |
           sh scripts/check-signing.sh
           sh scripts/check-pii.sh
 
   build:
     name: build on macOS
-    needs: tests
+    needs: [version, tests]
     runs-on: macos-15
     permissions:
       contents: read
-      id-token: write      # for the provenance attestation
+      id-token: write # for the provenance attestation
       attestations: write
     env:
-      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      VERSION: ${{ needs.version.outputs.version }}
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref_name }}
           fetch-depth: 0
       - name: Toolchain
         run: |
@@ -63,14 +86,11 @@ jobs:
           swift --version
           make doctor
       - name: Build the lite app and the event daemon
-        run: |
-          VERSION="${TAG#v}"
-          make build-lite APP_VERSION="${VERSION%%-*}"
+        run: make build-lite APP_VERSION="$VERSION"
       - name: Package
         run: |
-          BUILD=$(git rev-list --count HEAD)
           mkdir -p dist
-          ditto -c -k --sequesterRsrc --keepParent build/lite/Crescendo.app "dist/Crescendo-lite-${TAG}-build${BUILD}.zip"
+          ditto -c -k --sequesterRsrc --keepParent build/lite/Crescendo.app "dist/Crescendo-lite-${TAG}.zip"
           cp build/esd/crescendo-esd "dist/crescendo-esd-${TAG}-$(uname -m)"
           tar --exclude='__pycache__' -czf "dist/cresc-engine-${TAG}.tar.gz" -C tools cresc
           (cd dist && shasum -a 256 * > SHA256SUMS)
@@ -86,14 +106,17 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: publish the release
-    needs: build
+    name: publish
+    needs: [version, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
-      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      TAG: ${{ needs.version.outputs.tag }}
+      VERSION: ${{ needs.version.outputs.version }}
+      OFFICIAL: ${{ inputs.official || false }}
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -101,7 +124,10 @@ jobs:
           path: dist
       - name: Release notes
         run: |
-          cat > notes.md <<'NOTES'
+          {
+            if [ "$OFFICIAL" = true ]; then echo "## Crescendo $VERSION"; else echo "## Crescendo $VERSION (automatic pre-release of ${GITHUB_SHA::7})"; fi
+            cat <<'NOTES'
+
           ## Install
           1. Download `Crescendo-lite-*.zip`, unzip it and move **Crescendo.app** to /Applications.
           2. The app is signed ad-hoc ("Sign to Run Locally") and is **not notarized**, so macOS blocks the first launch.
@@ -110,8 +136,7 @@ jobs:
              you to give that daemon **Full Disk Access** (System Settings > Privacy & Security). No SIP changes are needed.
           4. Select the **File** segment and press **Start**.
 
-          Needs macOS 13 or later and Python 3 (Command Line Tools or Homebrew) for the bundled engine.
-          Full guide: `docs/user-guide.md` in the source tree.
+          Needs macOS 13 or later and Python 3 (Command Line Tools or Homebrew) for the bundled engine. Guide: `docs/user-guide.md`.
 
           ## Verify the download
           ```
@@ -124,11 +149,27 @@ jobs:
           - `crescendo-esd-*`: the event daemon binary alone (advanced; the app installs its own copy)
           - `cresc-engine-*.tar.gz`: the cresc engine / command-line tool (`python3 -m cresc`)
           - `SHA256SUMS`
+
+          ## Latest changes
           NOTES
+            gh api "repos/$GITHUB_REPOSITORY/commits?sha=$GITHUB_SHA&per_page=10" --jq '.[] | "- " + .sha[0:7] + " " + (.commit.message | split("\n")[0])'
+          } > notes.md
       - name: Create or update the release
         run: |
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+            if [ "$OFFICIAL" = true ]; then gh release edit "$TAG" --prerelease=false --latest; fi
+          elif [ "$OFFICIAL" = true ]; then
+            gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TAG" --notes-file notes.md --latest
           else
-            gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes-file notes.md --verify-tag
+            gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TAG" --notes-file notes.md --prerelease
           fi
+      - name: Keep only the newest 10 pre-releases
+        run: |
+          gh release list --limit 200 --json tagName,isPrerelease,createdAt \
+            --jq '[.[] | select(.isPrerelease and (.tagName | startswith("v")))] | sort_by(.createdAt) | reverse | .[10:] | .[].tagName' |
+          while read -r old; do
+            [ -n "$old" ] || continue
+            echo "removing old pre-release $old"
+            gh release delete "$old" --cleanup-tag --yes
+          done

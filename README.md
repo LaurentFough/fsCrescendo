@@ -40,7 +40,8 @@ Every feature with its location, requirements and verification status: [docs/fea
 
 ## Install
 
-**From a release** (recommended): download `Crescendo-lite-*.zip` from the [Releases](../../releases) page, unzip, move **Crescendo.app** to
+**From a release** (recommended): download `Crescendo-lite-*.zip` from the [Releases](../../releases) page (every push to `main` publishes an automatic
+pre-release `vX.Y.N`; releases without the *pre-release* label are the ones the maintainer promoted), unzip, move **Crescendo.app** to
 `/Applications`. The app is signed ad-hoc and **not notarized**, so macOS blocks the first launch: right-click the app, **Open**, **Open**
 (or `xattr -dr com.apple.quarantine /Applications/Crescendo.app`). Check the download with `shasum -a 256 -c SHA256SUMS`.
 
