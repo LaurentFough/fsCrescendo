@@ -1,5 +1,6 @@
 # = Shot list for the documentation screenshots. Format:  file-name (without .png) | what the window must show
 # = Capture with:  make screenshots            (all, one after the other)   or   make screenshots ONLY=files-list
+# = (your own capture tool; fallback: make screenshots-builtin)
 # = Use a demo setup: a scratch folder with harmless files, no personal folders open, and a macOS account whose name you are happy to show.
 hero-dark|Main window, File segment, List mode, capture running, a row selected with the inspector open (macOS Dark appearance)
 hero-light|The same view in the Light appearance

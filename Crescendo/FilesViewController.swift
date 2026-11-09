@@ -203,6 +203,16 @@ final class FilesViewController: NSViewController, NSTableViewDataSource, NSTabl
         view = NSView()
     }
 
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        if let window = view.window {
+            NotificationCenter.default.removeObserver(self, name: NSWindow.didChangeOcclusionStateNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(occlusionChanged(_:)),
+                                                   name: NSWindow.didChangeOcclusionStateNotification, object: window)
+        }
+        if reloadWhenVisible { occlusionChanged(Notification(name: NSWindow.didChangeOcclusionStateNotification)) }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         buildUI()
@@ -592,17 +602,44 @@ final class FilesViewController: NSViewController, NSTableViewDataSource, NSTabl
         row.id = nextRowId
         rows.append(row)
         let cap = isReplay ? 200_000 : FilesViewController.maxRows
-        if rows.count > cap { rows.removeFirst(rows.count - cap); rebuildVisible() }
-        else if matches(row) {
+        //= The buffer is trimmed in blocks (cap + 10%), not on every event: trimming each time once the buffer was full re-filtered
+        //= all rows on the main thread for every incoming event and froze the app after it had run for a while (hang report).
+        if rows.count > cap + cap / 10 { trimOldRows(keeping: cap) }
+        if matches(row) {
             visible.append(row)
             if treeActive { treeView.tree.add(row) }
         }
         scheduleReload()
     }
 
-    //= bursts are coalesced: at most about four table updates per second
+    //= drop the oldest rows in one go. Row ids only grow, so the visible list loses exactly the rows older than the first kept id.
+    private func trimOldRows(keeping cap: Int) {
+        guard rows.count > cap else { return }
+        rows.removeFirst(rows.count - cap)
+        guard let firstId = rows.first?.id else { return }
+        if let keep = visible.firstIndex(where: { $0.id >= firstId }) { visible.removeFirst(keep) } else { visible.removeAll() }
+        if treeActive { treeView.tree.rebuild(visible) }
+    }
+
+    //= true while the window is hidden, minimised or fully covered: no table, text or graph updates are needed then
+    private var windowHidden: Bool {
+        guard let window = view.window else { return true }
+        return !window.occlusionState.contains(.visible)
+    }
+    private var reloadWhenVisible = false
+
+    //= called when the window's visibility changes; catches up once after it was hidden
+    @objc private func occlusionChanged(_ note: Notification) {
+        if reloadWhenVisible, !windowHidden {
+            reloadWhenVisible = false
+            reloadViews(scrollToEnd: true)
+        }
+    }
+
+    //= bursts are coalesced: at most about four table updates per second; nothing is drawn while the window is hidden
     private func scheduleReload() {
         guard !reloadPending else { return }
+        if windowHidden { reloadWhenVisible = true; return }
         reloadPending = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
             guard let self = self else { return }

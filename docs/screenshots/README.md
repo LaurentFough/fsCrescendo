@@ -18,5 +18,8 @@ keywords: [mockups, screenshots]
 > "illustration - not a screenshot". Details such as fonts and spacing differ from the real app.
 
 - Regenerate the illustrations: `make mockups` (Python 3.12+, Node with `playwright`).
-- Replace them with real captures: `make screenshots` (macOS). A real capture overwrites the illustration of the same name; the
+- Replace them with real captures: `make screenshots` (macOS). It shows, one shot at a time, which window and features to put on screen;
+  you capture with your own tool (Shottr, CleanShot, ...) and the script picks up the newest image from `~/Desktop` (`WATCH=dir` to
+  change it) or a path you type, and stores it as PNG. `make screenshots-builtin` is the fallback that uses macOS `screencapture`.
+  `ONLY=name` does one shot, `REDO=1` redoes shots already captured. Real captures are listed in `.real-captures`. A real capture overwrites the illustration of the same name; the
   shot list is in `SHOTS.txt`. Look at every picture before committing it.

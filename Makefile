@@ -107,7 +107,7 @@ endef
         install run logs logs-sandbox logs-replay crashes \
         sysext-list sysext-dev-on sysext-dev-off entitlements verify-sign eslogger \
         clean distclean \
-        check-signing check-pii check-docs screenshots mockups install-hooks local-sign probe-sandbox-net probe-sandbox-net-json cresc cresc-test \
+        check-signing check-pii check-docs screenshots screenshots-builtin mockups install-hooks local-sign probe-sandbox-net probe-sandbox-net-json cresc cresc-test \
         require-macos require-xcode require-clt require-team require-sign require-safe-builddir
 
 #= ---------------------------------------------------------------------------
@@ -284,8 +284,11 @@ check-pii: #= Fail if tracked files contain personal data (emails, real home fol
 check-docs: #= Check that links and images in README/docs resolve and report missing screenshots (STRICT=1 fails on them)
 	@sh scripts/check-docs.sh $(if $(filter 1,$(STRICT)),--strict)
 
-screenshots: require-macos #= Guided capture of the documentation screenshots into docs/screenshots (ONLY=name for one)
-	@sh scripts/capture-docs-screenshots.sh $(if $(ONLY),--only $(ONLY))
+screenshots: #= Guided capture: shows what to put on screen, you capture with your own tool (picked up from WATCH=dir, default ~/Desktop); ONLY=name, REDO=1
+	@sh scripts/capture-docs-screenshots.sh $(if $(ONLY),--only $(ONLY)) $(if $(WATCH),--watch $(WATCH)) $(if $(filter 1,$(REDO)),--redo)
+
+screenshots-builtin: require-macos #= Same guided capture, using macOS screencapture (click the window) as a fallback
+	@sh scripts/capture-docs-screenshots.sh --builtin $(if $(ONLY),--only $(ONLY)) $(if $(filter 1,$(REDO)),--redo)
 
 mockups: #= Regenerate the illustration images (HTML mockups, made-up data) into docs/screenshots; needs Python 3.12+ and Node with playwright
 	@python3 scripts/mockups/build.py && node scripts/mockups/render.mjs
