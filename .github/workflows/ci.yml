@@ -71,7 +71,7 @@ jobs:
         run: |
           mkdir -p dist
           ditto -c -k --sequesterRsrc --keepParent build/lite/Crescendo.app "dist/Crescendo-lite-ci-${GITHUB_SHA::7}.zip"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Crescendo-lite-ci
           path: dist/*.zip
