@@ -31,6 +31,84 @@ workbench for `sandbox-exec` profiles: run a suspicious program in a sandbox, se
 | hand over proof of what a run did | **Export evidence...** (zip with hashes) | [Evidence bundles](docs/user-guide.md#evidence-bundles) |
 | script all of it | `python3 -m cresc ...` | [Command line](docs/user-guide.md#command-line) |
 
+## Tour
+
+<sub>Illustrations with made-up data, not screenshots; real captures will replace them ([details](docs/screenshots/README.md)).</sub>
+
+### Watch file changes live
+
+Every created, deleted, modified, moved or attribute change appears as a row with the responsible process, inode and time. Colored kind icons and file-type icons make rows easy to scan; the inspector on the right shows the selected file's status, event and process details.
+
+[User guide](docs/user-guide.md#the-files-view)
+
+<img alt="List mode" src="docs/screenshots/files-list.png" width="760">
+
+### Read it as text
+
+Text mode shows one line per event (`MOD`, `CRE`, `DEL`, `MVT`), handy to copy into a ticket or a terminal.
+
+[User guide](docs/user-guide.md#the-files-view)
+
+<img alt="Text mode" src="docs/screenshots/files-text.png" width="760">
+
+### Narrow it down and hide noise
+
+The **Filter** panel takes rules on path, process, user and kind, with templates. Right-click a row (or press Delete) to hide a process or a folder.
+
+[User guide](docs/user-guide.md#filter-hide-and-the-row-menu)
+
+<img alt="Filter panel with rules and a hidden folder" src="docs/screenshots/files-filter.png" width="760">
+
+### See where the activity is
+
+**Tree** mode rolls changes up by folder with counts per kind. Selecting a folder shows a summary of the activity under it.
+
+[User guide](docs/user-guide.md#tree-and-graph)
+
+<img alt="Tree mode" src="docs/screenshots/files-tree.png" width="760">
+
+### Draw it
+
+**Graph** shows the same data as a horizontal tree (badges with change counts, a red cross on deleted files) or as a sunburst (the centre shows the total). Cap the number of paths, pick a user, hide Apple operations; zoom, pan and Center keep the picture in view.
+
+[User guide](docs/user-guide.md#tree-and-graph)
+
+<img alt="Graph, horizontal tree" src="docs/screenshots/files-graph-tree.png" width="760">
+
+<img alt="Graph, sunburst" src="docs/screenshots/files-graph-sunburst.png" width="760">
+
+### Record and replay
+
+**Record** keeps what you see, with optional pre-roll of the last minutes. Open the `.crescrec` file later in the player: pause, seek, change speed, skip idle gaps.
+
+[User guide](docs/user-guide.md#recordings-and-the-player)
+
+<img alt="Record button and pre-roll menu" src="docs/screenshots/files-record.png" width="760">
+
+<img alt="Recording player" src="docs/screenshots/player.png" width="760">
+
+### Run a program in a sandbox
+
+The **Cresc Console** runs a program under a `sandbox-exec` profile. **Sessions** sets the program and write folders; **Denials** lists what was blocked, with a generated rule and its risk; **Profile** keeps every version and grant.
+
+[User guide](docs/user-guide.md#the-cresc-console)
+
+<img alt="Console, Sessions tab" src="docs/screenshots/console-sessions.png" width="760">
+
+<img alt="Console, Denials tab" src="docs/screenshots/console-denials.png" width="760">
+
+<img alt="Console, Profile tab" src="docs/screenshots/console-profile.png" width="760">
+
+### Set up the event daemon
+
+A banner in the Files view tells you when the daemon is missing or has no Full Disk Access, and opens the setup. The menu bar item gives quick access to the console and recordings.
+
+[User guide](docs/user-guide.md#set-up)
+
+<img alt="Setup banner" src="docs/screenshots/setup-banner.png" width="760">
+
+<img alt="Menu bar item" src="docs/screenshots/menu-bar.png" width="760">
+
 Every feature with its location, requirements and verification status: [docs/features.md](docs/features.md).
 
 ## Requirements
