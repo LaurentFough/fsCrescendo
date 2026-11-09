@@ -16,8 +16,8 @@ workbench for `sandbox-exec` profiles: run a suspicious program in a sandbox, se
 - **No Apple entitlement and no SIP changes.** Events come from Apple's own `eslogger` tool through a small helper daemon you
   install once with an administrator password. (The original Endpoint Security app needs an Apple-approved entitlement or a VM with SIP off.)
 - **Everything stays on your Mac.** No network access, no telemetry. See [Privacy and permissions](#privacy-and-permissions).
-- Fork of [SuprHackerSteve/Crescendo](https://github.com/SuprHackerSteve/Crescendo) (MIT). The original system-extension code is kept
-  in the repository but is not part of the "lite" build described here.
+- A fork of [SuprHackerSteve/Crescendo](https://github.com/SuprHackerSteve/Crescendo) (MIT), see [NOTICE.md](NOTICE.md). The original
+  system-extension code is kept in the repository but is not part of the "lite" build described here.
 
 ## What you can do
 
@@ -102,5 +102,5 @@ Reference: [tools/cresc/README.md](tools/cresc/README.md) (commands) and [tools/
 
 ## Credits and licence
 
-MIT licence ([LICENSE](LICENSE)). Original Crescendo by Stephen Davis (FireEye, Inc.). This fork adds the lite build, the event daemon,
+MIT licence ([LICENSE](LICENSE)). Original Crescendo by Stephen Davis (FireEye, Inc.), upstream: <https://github.com/SuprHackerSteve/Crescendo> ([NOTICE.md](NOTICE.md)). This fork adds the lite build, the event daemon,
 the `cresc` engine, the Cresc Console and the Files view.
