@@ -43,7 +43,8 @@ make cresc-test           # engine tests (all platforms)
 make check                # signing, personal-data, whitespace, lint, build
 make check-pii            # HISTORY=1 also scans commits
 make check-docs           # links, images, missing screenshots (STRICT=1 fails on them)
-make screenshots          # guided capture (macOS)
+make screenshots          # guided: shows what to put on screen, you capture with your own tool (WATCH=dir, ONLY=name, REDO=1)
+make screenshots-builtin  # same, using macOS screencapture
 make version              # Makefile, git, build number
 ```
 
