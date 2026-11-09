@@ -107,7 +107,7 @@ endef
         install run logs logs-sandbox logs-replay crashes \
         sysext-list sysext-dev-on sysext-dev-off entitlements verify-sign eslogger \
         clean distclean \
-        check-signing check-pii check-docs screenshots install-hooks local-sign probe-sandbox-net probe-sandbox-net-json cresc cresc-test \
+        check-signing check-pii check-docs screenshots mockups install-hooks local-sign probe-sandbox-net probe-sandbox-net-json cresc cresc-test \
         require-macos require-xcode require-clt require-team require-sign require-safe-builddir
 
 #= ---------------------------------------------------------------------------
@@ -286,6 +286,9 @@ check-docs: #= Check that links and images in README/docs resolve and report mis
 
 screenshots: require-macos #= Guided capture of the documentation screenshots into docs/screenshots (ONLY=name for one)
 	@sh scripts/capture-docs-screenshots.sh $(if $(ONLY),--only $(ONLY))
+
+mockups: #= Regenerate the illustration images (HTML mockups, made-up data) into docs/screenshots; needs Python 3.12+ and Node with playwright
+	@python3 scripts/mockups/build.py && node scripts/mockups/render.mjs
 
 check-signing: #= Fail if the Xcode project has a Team ID, certificate or profile (local ad-hoc signing only)
 	@sh scripts/check-signing.sh
